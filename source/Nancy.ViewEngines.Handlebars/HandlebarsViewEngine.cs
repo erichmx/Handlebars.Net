@@ -14,18 +14,6 @@ namespace Nancy.ViewEngines.Handlebars
     /// </summary>
     public class HandlebarsViewEngine : IViewEngine
     {
-        private static ILayoutResolver _defaultLayoutResolver = new DefaultLayoutResolver();
-
-        private ILayoutResolver LayoutResolver
-        {
-            get
-            {
-                ILayoutResolver res;
-                TinyIoCContainer.Current.TryResolve<ILayoutResolver>(out res);
-                return res ?? _defaultLayoutResolver;
-            }
-        }
-
         /// <summary>
         /// Gets the extensions file extensions that are supported by the view engine.
         /// </summary>
@@ -57,94 +45,32 @@ namespace Nancy.ViewEngines.Handlebars
             {
                 Contents = stream =>
                 {
-                    var template = this.GetOrCompileTemplate(viewLocationResult, renderContext);
+                    var compiledView = this.GetOrCompileTemplate(viewLocationResult, renderContext);
 
                     var writer = new StreamWriter(stream);
 
-                    template(writer, model, renderContext, viewLocationResult);
+                    compiledView.Template(writer, model, renderContext, viewLocationResult);
                     writer.Flush();
                 }
             };
         }
 
-        private Action<TextWriter, object, IRenderContext, ViewLocationResult> GetOrCompileTemplate(ViewLocationResult viewLocationResult, IRenderContext renderContext)
+        private CompiledView GetOrCompileTemplate(ViewLocationResult viewLocationResult, IRenderContext renderContext)
         {
-            var viewFactory = renderContext.ViewCache.GetOrAdd(
+            var view = renderContext.ViewCache.GetOrAdd(
                 viewLocationResult,
                 x =>
                 {
                     using (var reader = x.Contents.Invoke())
-                        return this.GetCompiledTemplate<dynamic>(reader);
+                    {
+                        var compiledView = new CompiledView(reader);
+                        return compiledView;
+                    }
                 });
 
-            var view = viewFactory.Invoke();
+            view.RecompileIfNewer(viewLocationResult.Contents.Invoke());
 
             return view;
-        }
-
-        private Func<Action<TextWriter, object, IRenderContext, ViewLocationResult>> GetCompiledTemplate<TModel>(TextReader reader)
-        {
-            var template = HandlebarsDotNet.Handlebars.Compile(reader);
-
-            Func<Action<TextWriter, object>> nakedTemplate = () => template;
-
-            return CreateTemplateWithLayout(nakedTemplate);
-        }
-
-        private Func<Action<TextWriter, object, IRenderContext, ViewLocationResult>> CreateTemplateWithLayout(Func<Action<TextWriter, object>> nakedTemplate)
-        {
-            return () =>
-            {
-                return ((writer, model, context, viewLocationResult) =>
-                {
-                    WriteView(nakedTemplate, writer, model, context, viewLocationResult);
-                });
-            };
-        }
-
-        private void WriteView(Func<Action<TextWriter, object>> nakedTemplate,
-            TextWriter writer, object model, IRenderContext context, ViewLocationResult viewLocationResult)
-        {
-            var layoutLocationResult = LayoutResolver.ResolveLayoutLocatioon(viewLocationResult, context);
-            if (layoutLocationResult != null)
-                WriteWithLayout(nakedTemplate, writer, model, layoutLocationResult, context);
-            else
-                WriteNakedTemplate(nakedTemplate, writer, model);
-        }
-
-        private static void WriteWithLayout(Func<Action<TextWriter, object>> nakedTemplate, TextWriter writer, object model, ViewLocationResult layoutLocationResult, IRenderContext context)
-        {
-            using (var bodyStream = new MemoryStream())
-            {
-                using (var bodyWriter = new StreamWriter(bodyStream, writer.Encoding))
-                {
-                    WriteNakedTemplate(nakedTemplate, bodyWriter, model);
-                }
-                var layoutViewFactory = context.ViewCache.GetOrAdd<Func<Action<TextWriter, object>>>(
-                    layoutLocationResult,
-                    x =>
-                    {
-                        using (var reader = x.Contents.Invoke())
-                        {
-                            var layoutTemplate = HandlebarsDotNet.Handlebars.Compile(reader);
-                            return () => layoutTemplate;
-                        }
-                    });
-
-                var layout = layoutViewFactory.Invoke();
-                layout(writer, new { body = writer.Encoding.GetString(bodyStream.ToArray()) });
-            }
-        }
-
-        private static void WriteNakedTemplate(Func<Action<TextWriter, object>> nakedTemplate, TextWriter writer, object model)
-        {
-            nakedTemplate?.Invoke()(writer, model);
-        }
-
-        private Action<TextWriter, object> GetPartial(IRenderContext renderContext, string name, dynamic model)
-        {
-            var view = renderContext.LocateView(name, model);
-            return this.GetOrCompileTemplate(view, renderContext);
         }
     }
 }
