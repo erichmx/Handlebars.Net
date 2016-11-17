@@ -129,7 +129,7 @@ namespace Nancy.ViewEngines.Handlebars
                     });
 
                 var layout = layoutViewFactory.Invoke();
-                layout(writer, new { body = writer.Encoding.GetString(bodyStream.ToArray()) });
+                layout(writer, new { body = writer.Encoding.GetString(bodyStream.ToArray()), NancyContext = model.NancyContext });
             }
         }
 

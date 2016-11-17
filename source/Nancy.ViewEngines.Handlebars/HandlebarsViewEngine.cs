@@ -68,7 +68,8 @@ namespace Nancy.ViewEngines.Handlebars
                     }
                 });
 
-            view.RecompileIfNewer(viewLocationResult.Contents.Invoke());
+            using (var textReader = viewLocationResult.Contents.Invoke())
+                view.RecompileIfNewer(textReader);
 
             return view;
         }
