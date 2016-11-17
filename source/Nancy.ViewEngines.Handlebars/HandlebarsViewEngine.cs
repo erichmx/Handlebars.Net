@@ -1,6 +1,7 @@
 ﻿using HandlebarsDotNet;
 using HandlebarsDotNet.Compiler;
 using Nancy.Responses;
+using Nancy.TinyIoc;
 using Nancy.ViewEngines;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,18 @@ namespace Nancy.ViewEngines.Handlebars
     /// </summary>
     public class HandlebarsViewEngine : IViewEngine
     {
+        private static ILayoutResolver _defaultLayoutResolver = new DefaultLayoutResolver();
+
+        private ILayoutResolver LayoutResolver
+        {
+            get
+            {
+                ILayoutResolver res;
+                TinyIoCContainer.Current.TryResolve<ILayoutResolver>(out res);
+                return res ?? _defaultLayoutResolver;
+            }
+        }
+
         /// <summary>
         /// Gets the extensions file extensions that are supported by the view engine.
         /// </summary>
@@ -89,10 +102,10 @@ namespace Nancy.ViewEngines.Handlebars
             };
         }
 
-        private static void WriteView(Func<Action<TextWriter, object>> nakedTemplate,
+        private void WriteView(Func<Action<TextWriter, object>> nakedTemplate,
             TextWriter writer, object model, IRenderContext context, ViewLocationResult viewLocationResult)
         {
-            var layoutLocationResult = new DefaultLayoutResolver().ResolveLayoutLocatioon(viewLocationResult, context);
+            var layoutLocationResult = LayoutResolver.ResolveLayoutLocatioon(viewLocationResult, context);
             if (layoutLocationResult != null)
                 WriteWithLayout(nakedTemplate, writer, model, layoutLocationResult, context);
             else

@@ -5,17 +5,10 @@
       "type": "project",
       "framework": ".NETFramework,Version=v4.0",
       "compile": {
-        "bin/Debug/Handlebars.dll": {}
+        "bin/Release/Handlebars.dll": {}
       },
       "runtime": {
-        "bin/Debug/Handlebars.dll": {}
-      },
-      "contentFiles": {
-        "bin/Debug/Handlebars.pdb": {
-          "buildAction": "None",
-          "codeLanguage": "any",
-          "copyToOutput": true
-        }
+        "bin/Release/Handlebars.dll": {}
       }
     }
   }
