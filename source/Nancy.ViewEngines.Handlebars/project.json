@@ -1,0 +1,31 @@
+﻿{
+  "version": "1.0.0-*",
+  "description": "Enables using the Handlebars view engine with Nancy.",
+  "authors": [ "Erich von Hauske" ],
+
+  "packOptions": {
+    "tags": [ "Nancy", "View Engine", "Handlebars" ],
+    "projectUrl": "https://github.com/erichmx/Handlebars.Net",
+    "licenseUrl": "https://github.com/rexm/Handlebars.Net/blob/master/LICENSE",
+    "iconUrl": "http://nancyfx.org/nancy-nuget.png"
+  },
+
+  "buildOptions": {
+    "xmlDoc": true
+  },
+
+  "dependencies": {
+    "Nancy": "1.4.3",
+    "NETStandard.Library": "1.6.0"
+  },
+
+  "frameworks": {
+    "net452": {
+      "dependencies": {
+        "Handlebars": {
+          "target": "project"
+        }
+      }
+    }
+  }
+}

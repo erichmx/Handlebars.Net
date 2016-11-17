@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "exports": {
+    "Handlebars/1.0.0": {
+      "type": "project",
+      "framework": ".NETFramework,Version=v4.0",
+      "compile": {
+        "bin/Debug/Handlebars.dll": {}
+      },
+      "runtime": {
+        "bin/Debug/Handlebars.dll": {}
+      },
+      "contentFiles": {
+        "bin/Debug/Handlebars.pdb": {
+          "buildAction": "None",
+          "codeLanguage": "any",
+          "copyToOutput": true
+        }
+      }
+    }
+  }
+}
